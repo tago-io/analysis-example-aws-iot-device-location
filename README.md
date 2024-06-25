@@ -2,7 +2,7 @@
 
 ```mermaid
 sequenceDiagram
-    participant Action as Action
+    participant Action as TagoIO Action
     participant Analysis as TagoIO Analysis
     participant Device as TagoIO Device
     participant AWS as AWS
