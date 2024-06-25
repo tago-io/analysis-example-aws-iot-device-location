@@ -1,0 +1,11 @@
+{
+    "$schema": "https://github.com/tago-io/tagoio-cli/blob/master/docs/schema.json",
+    "analysisPath": "./analysis",
+    "buildPath": "./build",
+    "dev": {
+        "analysisList": [],
+        "id": "65f8320dbef4690009a7d9dc",
+        "profileName": "Tago",
+        "email": "bruno.gelatti@tago.io"
+    }
+}
