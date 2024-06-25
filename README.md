@@ -1,5 +1,6 @@
 # AWS IoT Core Device Location Integration
 
+```mermaid
 sequenceDiagram
     participant Action as Action
     participant Analysis as TagoIO Analysis
@@ -19,3 +20,4 @@ sequenceDiagram
     else Accuracy Invalid
         Analysis ->> Device: Register Data on Device Bucket Error
     end
+```
