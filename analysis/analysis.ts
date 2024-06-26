@@ -3,9 +3,11 @@ import { Analysis } from "@tago-io/sdk";
 import { GetPositionEstimateCommand, IoTWirelessClient } from "@aws-sdk/client-iot-wireless";
 
 async function getEstimatedDeviceLocation(context: TagoContext, scope: Data[]) {
-  // console.log(context);
-  // console.log(scope);
   const awsRegion = context.environment.find((x) => x.key === "AWS_REGION")?.value as string;
+  if (!awsRegion) {
+    console.error("AWS_REGION not found in the environment variables");
+    return;
+  }
   const gnssSolverVariable = context.environment.find((x) => x.key === "GNSS_SOLVER_VARIABLE")?.value as string
   const ipAddressVariable = context.environment.find((x) => x.key === "IP_ADDRESS_VARIABLE")?.value as string;
 
@@ -16,7 +18,7 @@ async function getEstimatedDeviceLocation(context: TagoContext, scope: Data[]) {
  
   let ipAddress;
   if (ipAddressVariable) {
-    ipAddress = scope.find((x) => x.variable === ipAddressVariable)?.value as string;
+    ipAddress = (scope.find((x) => x.variable === ipAddressVariable)?.value as string)?.split(";");
   }
 
   let input;
@@ -30,20 +32,27 @@ async function getEstimatedDeviceLocation(context: TagoContext, scope: Data[]) {
   } else if (ipAddress) {
     input = {
       Ip: {
-        IpAddress: ipAddress,
+        IpAddress: ipAddress[0],
       },
       Timestamp: new Date("TIMESTAMP"),
     };
+  } else {
+    console.error("No Variables value found in the scope");
+    return;
   }
   const client = new IoTWirelessClient({ region: awsRegion });
   const command = new GetPositionEstimateCommand(input);
-  const response = await client.send(command);  
-  const estimatedLocation = JSON.parse(response.GeoJsonPayload?.transformToString() ?? "");
-  if (estimatedLocation) {
-    console.log(estimatedLocation);
-    let latitude = estimatedLocation.coordinates[1];
-    let longitude = estimatedLocation.coordinates[0];
-    let accuracy = estimatedLocation.horizontalConfidenceLevel;
+  const response = await client.send(command).catch((error) => {
+    console.error(error);
+  });  
+  if (response) { 
+    const estimatedLocation = JSON.parse(response.GeoJsonPayload?.transformToString() ?? "");
+    if (estimatedLocation) {
+      console.log(estimatedLocation);
+      let lat = estimatedLocation.coordinates[1];
+      let lng = estimatedLocation.coordinates[0];
+      let acu = estimatedLocation.horizontalConfidenceLevel;
+    }
   }
 }
 
