@@ -6,8 +6,18 @@ async function getEstimatedDeviceLocation(context: TagoContext, scope: Data[]) {
   // console.log(context);
   // console.log(scope);
   const awsRegion = context.environment.find((x) => x.key === "AWS_REGION")?.value as string;
-  const gnssValue = scope.find((x) => x.variable === "gnss_solver")?.value as string;
-  const ipAddress = scope.find((x) => x.metadata?.ip_list)?.metadata?.ip_list;
+  const gnssSolverVariable = context.environment.find((x) => x.key === "GNSS_SOLVER_VARIABLE")?.value as string
+  const ipAddressVariable = context.environment.find((x) => x.key === "IP_ADDRESS_VARIABLE")?.value as string;
+
+  let gnssValue;
+  if (gnssSolverVariable) {
+    gnssValue = scope.find((x) => x.variable === gnssSolverVariable)?.value as string;
+  }
+ 
+  let ipAddress;
+  if (ipAddressVariable) {
+    ipAddress = scope.find((x) => x.variable === ipAddressVariable)?.value as string;
+  }
 
   let input;
   if (gnssValue) {
@@ -20,7 +30,7 @@ async function getEstimatedDeviceLocation(context: TagoContext, scope: Data[]) {
   } else if (ipAddress) {
     input = {
       Ip: {
-        IpAddress: ipAddress[0],
+        IpAddress: ipAddress,
       },
       Timestamp: new Date("TIMESTAMP"),
     };
@@ -33,6 +43,7 @@ async function getEstimatedDeviceLocation(context: TagoContext, scope: Data[]) {
     console.log(estimatedLocation);
     let latitude = estimatedLocation.coordinates[1];
     let longitude = estimatedLocation.coordinates[0];
+    let accuracy = estimatedLocation.horizontalConfidenceLevel;
   }
 }
 
