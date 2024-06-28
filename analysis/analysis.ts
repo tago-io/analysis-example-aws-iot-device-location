@@ -79,13 +79,12 @@ async function getEstimatedDeviceLocation(context: TagoContext, scope: Data[]) {
   let gnssValue = scope.find((x) => x.variable === gnssSolverVariable)?.value as string;
   let ipAddress = (scope.find((x) => x.variable === ipAddressVariable)?.value as string)?.split(";");
   let wifiAddresses = scope.find((x) => x.variable === wifiAdressesVariable)?.metadata; 
-
-  let payload = createAWSPayload(gnssValue, ipAddress, wifiAddresses);
-  if (!payload) {
+  if (!ipAddress && !wifiAddresses && !gnssValue) {
     console.error("No Variables value found in the scope");
     return;
   }
 
+  let payload = createAWSPayload(gnssValue, ipAddress, wifiAddresses);
   const client = new IoTWirelessClient({ credentials: { accessKeyId: awsAccessKeyId, secretAccessKey: awsSecretAccessKey, sessionToken: awsSessionToken }, region: awsRegion });
   const command = new GetPositionEstimateCommand(payload);
   const response = await client.send(command).catch((error) => {
