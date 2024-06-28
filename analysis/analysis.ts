@@ -2,7 +2,43 @@ import { Data, TagoContext } from "@tago-io/sdk/lib/types";
 import { Analysis, Resources } from "@tago-io/sdk";
 import { GetPositionEstimateCommand, IoTWirelessClient } from "@aws-sdk/client-iot-wireless";
 
-async function sendEstimatedLocationData(estimatedLocation: any, scope: Data, desireableAccuracy: string) {
+function createAWSPayload(gnssValue: string, ipAddress: string[], wifiAddresses) {
+  let payload = {};
+  if (gnssValue) {
+    Object.assign(payload, { 
+      Gnss: {
+        Payload: gnssValue,
+      } 
+    });
+  }
+
+  if (ipAddress) {
+    Object.assign(payload, { 
+      Ip: {
+        IpAddress: ipAddress[0],
+      } 
+    });
+  }
+
+  if (wifiAddresses) {
+    Object.assign(payload, { 
+      WiFiAccessPoints: [
+        { 
+          MacAddress: Object.keys(wifiAddresses)[0] as string,
+          Rss: Object.values(wifiAddresses)[0] as number,
+        },
+        { 
+          MacAddress: Object.keys(wifiAddresses)[1] as string,
+          Rss: Object.values(wifiAddresses)[1] as number,
+        },
+      ], 
+    });
+  }
+  Object.assign(payload, { Timestamp: new Date() });
+  return payload;
+}
+
+async function sendEstimatedLocationData(scope: Data, desireableAccuracy: string, estimatedLocation) {
   let lat = estimatedLocation.coordinates[1];
   let lng = estimatedLocation.coordinates[0];
   let horizontalAccuracy = estimatedLocation.properties.horizontalConfidenceLevel;
@@ -36,61 +72,22 @@ async function getEstimatedDeviceLocation(context: TagoContext, scope: Data[]) {
     console.error("AWS Credentials or Region not found in the environment variables");
     return;
   }
-  const desireableAccuracy = context.environment.find((x) => x.key === "DESIREABLE_ACCURACY")?.value as string || "0";
-  const gnssSolverVariable = context.environment.find((x) => x.key === "GNSS_SOLVER_VARIABLE")?.value as string
-  const ipAddressVariable = context.environment.find((x) => x.key === "IP_ADDRESS_VARIABLE")?.value as string;
-  const wifiAdressesVariable = context.environment.find((x) => x.key === "WIFI_ADDRESSES_VARIABLE")?.value as string;
+  const desireableAccuracyPercent = context.environment.find((x) => x.key === "DESIREABLE_ACCURACY_PERCENT")?.value as string || "0";
+  const gnssSolverVariable = context.environment.find((x) => x.key === "GNSS_SOLVER_VARIABLE")?.value as string || "gnss_solver";
+  const ipAddressVariable = context.environment.find((x) => x.key === "IP_ADDRESS_VARIABLE")?.value as string || "ip_addresses";
+  const wifiAdressesVariable = context.environment.find((x) => x.key === "WIFI_ADDRESSES_VARIABLE")?.value as string || "wifi_addresses";
+  let gnssValue = scope.find((x) => x.variable === gnssSolverVariable)?.value as string;
+  let ipAddress = (scope.find((x) => x.variable === ipAddressVariable)?.value as string)?.split(";");
+  let wifiAddresses = scope.find((x) => x.variable === wifiAdressesVariable)?.metadata; 
 
-  let gnssValue;
-  if (gnssSolverVariable) {
-    gnssValue = scope.find((x) => x.variable === gnssSolverVariable)?.value as string;
-  }
- 
-  let ipAddress;
-  if (ipAddressVariable) {
-    ipAddress = (scope.find((x) => x.variable === ipAddressVariable)?.value as string)?.split(";");
-  }
-
-  let wifiAddresses;
-  if (wifiAdressesVariable) {
-    wifiAddresses = scope.find((x) => x.variable === wifiAdressesVariable)?.metadata; 
-  };
-
-  let input;
-  if (gnssValue) {
-    input = {
-      Gnss: {
-        Payload: gnssValue,
-      },
-      Timestamp: new Date(),
-    };
-  } else if (ipAddress) {
-    input = {
-      Ip: {
-        IpAddress: ipAddress[0],
-      },
-      Timestamp: new Date(),
-    };
-  } else if (wifiAddresses) {
-    input = {
-      WiFiAccessPoints: [
-        { 
-          MacAddress: Object.keys(wifiAddresses)[0] as string,
-          Rss: Object.values(wifiAddresses)[0] as number,
-        },
-        { 
-          MacAddress: Object.keys(wifiAddresses)[1] as string,
-          Rss: Object.values(wifiAddresses)[1] as number,
-        },
-      ],
-      Timestamp: new Date(),
-    };
-  } else {
+  let payload = createAWSPayload(gnssValue, ipAddress, wifiAddresses);
+  if (!payload) {
     console.error("No Variables value found in the scope");
     return;
   }
+
   const client = new IoTWirelessClient({ credentials: { accessKeyId: awsAccessKeyId, secretAccessKey: awsSecretAccessKey, sessionToken: awsSessionToken }, region: awsRegion });
-  const command = new GetPositionEstimateCommand(input);
+  const command = new GetPositionEstimateCommand(payload);
   const response = await client.send(command).catch((error) => {
     console.error(error.message);
     return;
@@ -98,9 +95,10 @@ async function getEstimatedDeviceLocation(context: TagoContext, scope: Data[]) {
   if (response) { 
     const estimatedLocation = JSON.parse(response.GeoJsonPayload?.transformToString() ?? "");
     if (estimatedLocation) {
-      await sendEstimatedLocationData(estimatedLocation, scope[0], desireableAccuracy);
+      await sendEstimatedLocationData(scope[0], desireableAccuracyPercent, estimatedLocation);
     }
   }
+  console.log("Analysis Finished");
 }
 
 module.exports = new Analysis(getEstimatedDeviceLocation, { token: process.env.T_ANALYSIS_TOKEN });

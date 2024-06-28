@@ -3,5 +3,9 @@
     "@aws-sdk/client-iot-wireless": "^3.600.0",
     "@tago-io/cli": "^1.6.0",
     "@tago-io/sdk": "^11.2.1"
+  },
+  "devDependencies": {
+    "biome": "^0.3.3",
+    "vitest": "^1.6.0"
   }
 }
