@@ -1,9 +1,23 @@
-import { Data, TagoContext } from "@tago-io/sdk/lib/types";
+import { Data, DataCreate, TagoContext } from "@tago-io/sdk/lib/types";
 import { Analysis, Resources } from "@tago-io/sdk";
 import { GetPositionEstimateCommand, IoTWirelessClient } from "@aws-sdk/client-iot-wireless";
 
-function createAWSPayload(gnssValue: string, ipAddress: string[], wifiAddresses) {
-  let payload = {};
+interface PayloadReturn {
+  Gnss?: {
+    Payload: string,
+  },
+  Ip?: {
+    IpAddress: string,
+  },
+  WiFiAccessPoints?: {
+    MacAddress: string,
+    Rss: number,
+  }[],
+  Timestamp: Date,
+};
+
+function _createAWSPayload(gnssValue: string, ipAddress: string[], wifiAddresses): PayloadReturn  {
+  let payload: PayloadReturn = {Timestamp: new Date()};
   if (gnssValue) {
     Object.assign(payload, { 
       Gnss: {
@@ -12,7 +26,7 @@ function createAWSPayload(gnssValue: string, ipAddress: string[], wifiAddresses)
     });
   }
 
-  if (ipAddress) {
+  if (ipAddress.length > 0) {
     Object.assign(payload, { 
       Ip: {
         IpAddress: ipAddress[0],
@@ -34,17 +48,16 @@ function createAWSPayload(gnssValue: string, ipAddress: string[], wifiAddresses)
       ], 
     });
   }
-  Object.assign(payload, { Timestamp: new Date() });
   return payload;
 }
 
-async function sendEstimatedLocationData(scope: Data, desireableAccuracy: string, estimatedLocation) {
+function _createDataForDevice(scope: Data, desireableAccuracy: string, estimatedLocation): DataCreate {
   let lat = estimatedLocation.coordinates[1];
   let lng = estimatedLocation.coordinates[0];
   let horizontalAccuracy = estimatedLocation.properties.horizontalConfidenceLevel;
   let verticalAccuracy = estimatedLocation.properties.verticalConfidenceLevel;
   let accuracy = ((horizontalAccuracy >= parseInt(desireableAccuracy) || verticalAccuracy >= parseInt(desireableAccuracy)));
-  await Resources.devices.sendDeviceData(scope.device, {
+  let dataReturn: DataCreate = {
     variable: "estimated_location",
     value: accuracy ? "accurate" : "not accurate",
     location: {
@@ -58,11 +71,11 @@ async function sendEstimatedLocationData(scope: Data, desireableAccuracy: string
     },
     group: scope.group,
     time: scope.time,
-  });
-  console.log("Data sent to the device");
+  };
+  return dataReturn;
 }
 
-export async function getEstimatedDeviceLocation(context: TagoContext, scope: Data[]) {
+async function getEstimatedDeviceLocation(context: TagoContext, scope: Data[]) {
   console.log("Starting Analysis");
   const awsAccessKeyId = context.environment.find((x) => x.key === "AWS_ACCESSKEYID")?.value as string;
   const awsSecretAccessKey = context.environment.find((x) => x.key === "AWS_SECRETACCESSKEY")?.value as string;
@@ -84,7 +97,7 @@ export async function getEstimatedDeviceLocation(context: TagoContext, scope: Da
     return;
   }
 
-  let payload = createAWSPayload(gnssValue, ipAddress, wifiAddresses);
+  let payload = _createAWSPayload(gnssValue, ipAddress, wifiAddresses);
   const client = new IoTWirelessClient({ credentials: { accessKeyId: awsAccessKeyId, secretAccessKey: awsSecretAccessKey, sessionToken: awsSessionToken }, region: awsRegion });
   const command = new GetPositionEstimateCommand(payload);
   const response = await client.send(command).catch((error) => {
@@ -94,10 +107,14 @@ export async function getEstimatedDeviceLocation(context: TagoContext, scope: Da
   if (response) { 
     const estimatedLocation = JSON.parse(response.GeoJsonPayload?.transformToString() ?? "");
     if (estimatedLocation) {
-      await sendEstimatedLocationData(scope[0], desireableAccuracyPercent, estimatedLocation);
+      await Resources.devices.sendDeviceData(scope[0].device, _createDataForDevice(scope[0], desireableAccuracyPercent, estimatedLocation));
     }
   }
   console.log("Analysis Finished");
 }
 
-module.exports = new Analysis(getEstimatedDeviceLocation, { token: process.env.T_ANALYSIS_TOKEN });
+if (process.env.NODE_ENV !== "test") {
+  module.exports = new Analysis(getEstimatedDeviceLocation, { token: process.env.T_ANALYSIS_TOKEN });
+}
+
+export { _createAWSPayload, _createDataForDevice };
