@@ -101,3 +101,5 @@ async function getEstimatedDeviceLocation(context: TagoContext, scope: Data[]) {
 }
 
 module.exports = new Analysis(getEstimatedDeviceLocation, { token: process.env.T_ANALYSIS_TOKEN });
+
+export { getEstimatedDeviceLocation };

@@ -1,7 +1,8 @@
 import { describe, expect, test } from 'vitest'
+import { getEstimatedDeviceLocation } from './analysis'
 
 describe("", () => {
     test("analysis", () => {
-        expect(true).toBe(true)
+        expect(getEstimatedDeviceLocation()).toBe(true)
     });
 });
