@@ -62,7 +62,7 @@ async function sendEstimatedLocationData(scope: Data, desireableAccuracy: string
   console.log("Data sent to the device");
 }
 
-async function getEstimatedDeviceLocation(context: TagoContext, scope: Data[]) {
+export async function getEstimatedDeviceLocation(context: TagoContext, scope: Data[]) {
   console.log("Starting Analysis");
   const awsAccessKeyId = context.environment.find((x) => x.key === "AWS_ACCESSKEYID")?.value as string;
   const awsSecretAccessKey = context.environment.find((x) => x.key === "AWS_SECRETACCESSKEY")?.value as string;
@@ -101,5 +101,3 @@ async function getEstimatedDeviceLocation(context: TagoContext, scope: Data[]) {
 }
 
 module.exports = new Analysis(getEstimatedDeviceLocation, { token: process.env.T_ANALYSIS_TOKEN });
-
-export { getEstimatedDeviceLocation };
