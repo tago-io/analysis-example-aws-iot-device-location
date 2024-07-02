@@ -15,6 +15,8 @@ describe("getEstimatedPosition", () => {
         const ip_address = ["127.0.0.1", "127.0.0.2"];
         const payload = _createAWSPayload("", ip_address, undefined);
 		expect(payload.Ip?.IpAddress).toBe("127.0.0.1");
+        expect(payload.WiFiAccessPoints).toBeUndefined();
+        expect(payload.Gnss).toBeUndefined();
 	});
 
     test("should return wifi_adress payload", () => {
@@ -27,12 +29,16 @@ describe("getEstimatedPosition", () => {
         expect(payload.WiFiAccessPoints?.[0]?.Rss).toBe(-75);
         expect(payload.WiFiAccessPoints?.[1]?.MacAddress).toBe("A1:EC:F9:1E:32:C1");
         expect(payload.WiFiAccessPoints?.[1]?.Rss).toBe(-56);
+        expect(payload.Gnss).toBeUndefined();
+        expect(payload.Ip).toBeUndefined();
 	});
 
     test("should return gnss solver payload", () => {
         const gnss_solver = "A1B2C3D401020304112233445566778899AABBCCDDEEFF001234567890ABCDEF";
         const payload = _createAWSPayload(gnss_solver, [], undefined);
         expect(payload.Gnss?.Payload).toBe("A1B2C3D401020304112233445566778899AABBCCDDEEFF001234567890ABCDEF");
+        expect(payload.WiFiAccessPoints).toBeUndefined();
+        expect(payload.Ip).toBeUndefined();
 	});
 
     test("should return all payload", () => {
@@ -83,10 +89,9 @@ describe("getEstimatedPosition", () => {
         expect(result.time).toBe(scope.time);
         expect(result.variable).toBe("estimated_location");
         expect(result.value).toBe("accurate");
-        expect(result.location?.lat).toBe(20);
-        expect(result.location?.lng).toBe(10);
         expect(result.metadata?.horizontalAccuracy).toBe(10);
         expect(result.metadata?.verticalAccuracy).toBe(12);
         expect(result.metadata?.color).toBe("green");
+        expect.objectContaining({result: {location: {lat: 20, lng: 10}}});
 	});
 });

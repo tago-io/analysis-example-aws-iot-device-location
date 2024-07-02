@@ -79,9 +79,8 @@ async function getEstimatedDeviceLocation(context: TagoContext, scope: Data[]) {
   console.log("Starting Analysis");
   const awsAccessKeyId = context.environment.find((x) => x.key === "AWS_ACCESSKEYID")?.value as string;
   const awsSecretAccessKey = context.environment.find((x) => x.key === "AWS_SECRETACCESSKEY")?.value as string;
-  const awsSessionToken = context.environment.find((x) => x.key === "AWS_SESSIONTOKEN")?.value as string;
   const awsRegion = context.environment.find((x) => x.key === "AWS_REGION")?.value as string;
-  if (!awsRegion || !awsAccessKeyId || !awsSecretAccessKey || !awsSessionToken) {
+  if (!awsRegion || !awsAccessKeyId || !awsSecretAccessKey) {
     console.error("AWS Credentials or Region not found in the environment variables");
     return;
   }
@@ -98,7 +97,7 @@ async function getEstimatedDeviceLocation(context: TagoContext, scope: Data[]) {
   }
 
   let payload = _createAWSPayload(gnssValue, ipAddress, wifiAddresses);
-  const client = new IoTWirelessClient({ credentials: { accessKeyId: awsAccessKeyId, secretAccessKey: awsSecretAccessKey, sessionToken: awsSessionToken }, region: awsRegion });
+  const client = new IoTWirelessClient({ credentials: { accessKeyId: awsAccessKeyId, secretAccessKey: awsSecretAccessKey }, region: awsRegion });
   const command = new GetPositionEstimateCommand(payload);
   const response = await client.send(command).catch((error) => {
     console.error(error.message);
