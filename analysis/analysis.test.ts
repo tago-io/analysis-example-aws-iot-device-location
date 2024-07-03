@@ -7,7 +7,7 @@ vi.mock("@tago-io/sdk", () => ({
     devices: {
       sendDeviceData: vi.fn(),
     },
-  },
+  },    
 }));
 
 describe("getEstimatedPosition", () => {
