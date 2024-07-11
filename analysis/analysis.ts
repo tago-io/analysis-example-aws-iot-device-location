@@ -154,15 +154,11 @@ async function getEstimatedDeviceLocation(context: TagoContext, scope: Data[]) {
   const ipAddress = (scope.find((x) => x.variable === ipAddressVariable)?.value as string)?.split(";"); //Get the IP Address value from scope. Must be a IPv4 address (127.0.0.1)
   const wifiAddresses = scope.find((x) => x.variable === wifiAdressesVariable)?.metadata; //Get the Wifi Addresses value from scope. Must be an object with the MAC Address as key and RSS as value ({"A0:EC:F9:1E:32:C1": -75, "A1:EC:F9:1E:32:C1": -56})
 
-  const payload = _createAWSPayload(gnssValue, ipAddress[0], wifiAddresses);
-  const client = new IoTWirelessClient({ credentials: { accessKeyId: configuration.awsAccessKeyId, secretAccessKey: configuration.awsSecretAccessKey }, region: configuration.awsRegion });
-  const command = new GetPositionEstimateCommand(payload);
-  const response = await client.send(command).catch((error) => {
-    console.error(error.message);
-    return;
-  });
-
   try {
+    const payload = _createAWSPayload(gnssValue, ipAddress[0], wifiAddresses);
+    const client = new IoTWirelessClient({ credentials: { accessKeyId: configuration.awsAccessKeyId, secretAccessKey: configuration.awsSecretAccessKey }, region: configuration.awsRegion });
+    const command = new GetPositionEstimateCommand(payload);
+    const response = await client.send(command);
     const estimatedLocation = _getEstimatedLocation(response);
     await Resources.devices.sendDeviceData(scope[0].device, _createDataForDevice(scope[0], configuration.desireableAccuracyPercent, estimatedLocation));
     console.log("Analysis Finished");
