@@ -113,7 +113,7 @@ function _createDataForDevice(scope: Data, desireableAccuracy: string, estimated
   let accuracy = horizontalAccuracy >= parseFloat(desireableAccuracy) || verticalAccuracy >= parseFloat(desireableAccuracy);
   let dataReturn: DataCreate = {
     variable: "estimated_location",
-    value: accuracy ? "accurate" : "not accurate",
+    value: lat + ";" + lng,
     location: {
       lat,
       lng,

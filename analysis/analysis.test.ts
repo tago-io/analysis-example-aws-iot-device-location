@@ -99,7 +99,7 @@ describe("getEstimatedPosition", () => {
     expect(result.group).toBe(scope.group);
     expect(result.time).toBe(scope.time);
     expect(result.variable).toBe("estimated_location");
-    expect(result.value).toBe("accurate");
+    expect(result.value).toBe("20;10");
     expect(result.metadata?.horizontalAccuracy).toBe(10);
     expect(result.metadata?.verticalAccuracy).toBe(12);
     expect(result.metadata?.color).toBe("green");
