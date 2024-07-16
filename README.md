@@ -1,16 +1,39 @@
-# AWS IoT Core Device Location Integration
-Using AWS IoT Core Device Location to estimate the location of your device without using GPS.
+# TagoIO - AWS IOT Core Device Location Integration
+AWS IOT Core Device Location is a service from AWS that may permit you to estimate the location of your device using third-party solvers and don’t need the use of a GPS device, more about it in the documentation.
 
-## How to run this analysis
-You should have last node version and install all dependencies running `npm install` on your terminal in this project folder.
-You need to run `tagoio init` to login in your TagoIO account and set the analysis to execute.
+# How to Run This Analysis
 
-To run locally you need to run the command `tagoio run`
+## Prerequisites
+- Ensure you have the latest version of Node.js installed on your system.
 
-or
+## Option 1: Upload to TagoIO Platform
 
-You should run `tagoio deploy` to run this analysis on TagoIO servers.
+1. Simply upload the `analysis.tago.js` file to your TagoIO account.
 
+## Option 2: Run Locally
+
+1. Open a terminal and navigate to the project folder.
+2. Install dependencies:
+   ```
+   npm install
+   ```
+3. Run the analysis:
+   ```
+   node analysis.js
+   ```
+
+## Building the Analysis
+
+To build the analysis for deployment:
+
+1. Install the TagoIO builder tool globally:
+   ```
+   npm install -g @tago-io/builder
+   ```
+2. Pack the analysis using the command:
+   ```
+   tago-builder src/analysis.ts ./
+   ```
 # Sequence diagram of that integration
 ```mermaid
 sequenceDiagram
