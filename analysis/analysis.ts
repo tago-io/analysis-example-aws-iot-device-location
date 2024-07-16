@@ -147,12 +147,23 @@ async function getEstimatedDeviceLocation(context: TagoContext, scope: Data[]) {
   }
 
   // Get the variables from the environment
-  const gnssSolverVariable = (context.environment.find((x) => x.key === "GNSS_SOLVER_VARIABLE")?.value as string) || "gnss_solver"; //Name of the variable to get GNSS Payload value
-  const ipAddressVariable = (context.environment.find((x) => x.key === "IP_ADDRESS_VARIABLE")?.value as string) || "ip_addresses"; //Name of the variable to get IP Address value
-  const wifiAdressesVariable = (context.environment.find((x) => x.key === "WIFI_ADDRESSES_VARIABLE")?.value as string) || "wifi_addresses"; //Name of the variable to get Wifi Address value
-  const gnssValue = scope.find((x) => x.variable === gnssSolverVariable)?.value as string; //Get the GNSS Payload value from scope
-  const ipAddress = (scope.find((x) => x.variable === ipAddressVariable)?.value as string)?.split(";"); //Get the IP Address value from scope. Must be a IPv4 address (127.0.0.1)
-  const wifiAddresses = scope.find((x) => x.variable === wifiAdressesVariable)?.metadata; //Get the Wifi Addresses value from scope. Must be an object with the MAC Address as key and RSS as value ({"A0:EC:F9:1E:32:C1": -75, "A1:EC:F9:1E:32:C1": -56})
+  //Name of the variable to get GNSS Payload value
+  const gnssSolverVariable = (context.environment.find((x) => x.key === "GNSS_SOLVER_VARIABLE")?.value as string) || "gnss_solver"; 
+  
+  //Name of the variable to get IP Address value
+  const ipAddressVariable = (context.environment.find((x) => x.key === "IP_ADDRESS_VARIABLE")?.value as string) || "ip_addresses";
+  
+  //Name of the variable to get Wifi Address value
+  const wifiAdressesVariable = (context.environment.find((x) => x.key === "WIFI_ADDRESSES_VARIABLE")?.value as string) || "wifi_addresses"; 
+  
+  //Get the GNSS Payload value from scope
+  const gnssValue = scope.find((x) => x.variable === gnssSolverVariable)?.value as string; 
+
+  //Get the IP Address value from scope. Must be a IPv4 address (127.0.0.1)
+  const ipAddress = (scope.find((x) => x.variable === ipAddressVariable)?.value as string)?.split(";");
+  
+  //Get the Wifi Addresses value from scope. Must be an object with the MAC Address as key and RSS as value ({"A0:EC:F9:1E:32:C1": -75, "A1:EC:F9:1E:32:C1": -56})
+  const wifiAddresses = scope.find((x) => x.variable === wifiAdressesVariable)?.metadata; 
 
   try {
     const payload = _createAWSPayload(gnssValue, ipAddress[0], wifiAddresses);
@@ -168,7 +179,7 @@ async function getEstimatedDeviceLocation(context: TagoContext, scope: Data[]) {
 }
 
 if (process.env.NODE_ENV !== "test") {
-  module.exports = new Analysis(getEstimatedDeviceLocation, { token: process.env.T_ANALYSIS_TOKEN });
+  module.exports = new Analysis(getEstimatedDeviceLocation, { token: process.env.T_ANALYSIS_TOKEN || "Your-Analysis-Token" });
 }
 
 export { _createAWSPayload, _createDataForDevice, _getConfiguration, _getEstimatedLocation };
