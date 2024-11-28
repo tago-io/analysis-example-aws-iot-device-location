@@ -1,6 +1,6 @@
-import { Data, DataCreate, TagoContext } from "@tago-io/sdk/lib/types";
-import { Analysis, Resources } from "@tago-io/sdk";
 import { GetPositionEstimateCommand, IoTWirelessClient } from "@aws-sdk/client-iot-wireless";
+import { Analysis, Resources } from "@tago-io/sdk";
+import { Data, DataCreate, TagoContext } from "@tago-io/sdk/lib/types";
 
 interface PayloadReturn {
   Gnss?: {
@@ -179,7 +179,7 @@ async function getEstimatedDeviceLocation(context: TagoContext, scope: Data[]) {
 }
 
 if (process.env.NODE_ENV !== "test") {
-  module.exports = new Analysis(getEstimatedDeviceLocation, { token: process.env.T_ANALYSIS_TOKEN || "Your-Analysis-Token" });
+  Analysis.use(getEstimatedDeviceLocation, { token: process.env.T_ANALYSIS_TOKEN || "Your-Analysis-Token" });
 }
 
 export { _createAWSPayload, _createDataForDevice, _getConfiguration, _getEstimatedLocation };
